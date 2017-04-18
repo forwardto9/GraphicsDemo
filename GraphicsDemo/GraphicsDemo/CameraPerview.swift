@@ -20,22 +20,20 @@ class CameraPerview: UIView {
     */
 
     var videoPreviewLayer:AVCaptureVideoPreviewLayer {
-        return (self.layer as! AVCaptureVideoPreviewLayer)
+        return layer as! AVCaptureVideoPreviewLayer
     }
     
-    var session:AVCaptureSession! {
+    var session:AVCaptureSession? {
         set {
-            self.session = self.videoPreviewLayer.session
+            videoPreviewLayer.session = newValue
         }
         
         get {
-            return self.videoPreviewLayer.session
+            return videoPreviewLayer.session
         }
     }
     
-    override var classForCoder: AnyClass {
-        return AVCaptureVideoPreviewLayer.classForCoder()
+    override class var layerClass: AnyClass {
+        return AVCaptureVideoPreviewLayer.self
     }
-    
-    
 }

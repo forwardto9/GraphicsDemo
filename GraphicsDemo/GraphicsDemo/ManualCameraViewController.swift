@@ -11,19 +11,14 @@ import AVFoundation
 class ManualCameraViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
     @IBOutlet weak var camerasTables:UITableView!
-    fileprivate var videoDeviceDiscoverySession:AVCaptureDeviceDiscoverySession!
-    fileprivate var cameraSession:AVCaptureSession!
-    fileprivate var cameraInput:AVCaptureDeviceInput!
-    fileprivate var cameraOutput:AVCaptureMetadataOutput!
-    fileprivate var cameraPreview:CameraPerview!
-    fileprivate var captuerQueue:DispatchQueue!
+    
+    fileprivate var deviceInputArray = ["AVCaptureMetadataOutput", "AVCaptureMovieFileOutput", "AVCapturePhotoOutput", "AVCaptureStillImageOutput", "AVCaptureVideoDataOutput"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        camerasTables.register(UITableViewCell.classForCoder(), forCellReuseIdentifier: "cell")
         // Do any additional setup after loading the view, typically from a nib.
 //        let deviceTypes:[AVCaptureDeviceType] = [.builtInDualCamera, .builtInDuoCamera, .builtInTelephotoCamera, .builtInWideAngleCamera]
-        let deviceTypes:[AVCaptureDeviceType] = [.builtInDuoCamera, .builtInTelephotoCamera, .builtInWideAngleCamera]
-        self.videoDeviceDiscoverySession = AVCaptureDeviceDiscoverySession(deviceTypes: deviceTypes, mediaType: AVMediaTypeVideo, position: AVCaptureDevicePosition.unspecified)
     }
 
     override func didReceiveMemoryWarning() {
@@ -36,14 +31,18 @@ class ManualCameraViewController: UIViewController, UITableViewDelegate, UITable
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.videoDeviceDiscoverySession.devices.count
+        return self.deviceInputArray.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        cell.textLabel?.text = self.videoDeviceDiscoverySession.devices[indexPath.row].localizedName
-        
+        cell.textLabel?.text = deviceInputArray[indexPath.row]        
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let cameraViewController = self.storyboard?.instantiateViewController(withIdentifier: "CameraViewController") as! CameraViewController
+        self.present(cameraViewController, animated: false, completion: nil)
     }
     
 }

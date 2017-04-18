@@ -15,6 +15,7 @@
 		C26FA2281E9E4C8600EFB64E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C26FA2261E9E4C8600EFB64E /* Main.storyboard */; };
 		C26FA22A1E9E4C8600EFB64E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C26FA2291E9E4C8600EFB64E /* Assets.xcassets */; };
 		C26FA22D1E9E4C8600EFB64E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C26FA22B1E9E4C8600EFB64E /* LaunchScreen.storyboard */; };
+		C27CC34A1EA5A48C00564064 /* CameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27CC3491EA5A48C00564064 /* CameraViewController.swift */; };
 		C295E1161EA0FFA60048F0DF /* CameraPerview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C295E1151EA0FFA60048F0DF /* CameraPerview.swift */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +30,7 @@
 		C26FA2291E9E4C8600EFB64E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C26FA22C1E9E4C8600EFB64E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		C26FA22E1E9E4C8600EFB64E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C27CC3491EA5A48C00564064 /* CameraViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraViewController.swift; sourceTree = "<group>"; };
 		C295E1151EA0FFA60048F0DF /* CameraPerview.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraPerview.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -81,6 +83,7 @@
 				C26FA22E1E9E4C8600EFB64E /* Info.plist */,
 				C205DF021E9F7854000E721F /* MainTabViewController.swift */,
 				C295E1151EA0FFA60048F0DF /* CameraPerview.swift */,
+				C27CC3491EA5A48C00564064 /* CameraViewController.swift */,
 			);
 			path = GraphicsDemo;
 			sourceTree = "<group>";
@@ -118,7 +121,7 @@
 					C26FA21C1E9E4C8600EFB64E = {
 						CreatedOnToolsVersion = 8.3;
 						DevelopmentTeam = 299MFJ63GP;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 					};
 				};
 			};
@@ -163,6 +166,7 @@
 				C205DF031E9F7854000E721F /* MainTabViewController.swift in Sources */,
 				C26FA2211E9E4C8600EFB64E /* AppDelegate.swift in Sources */,
 				C26FA2231E9E4C8600EFB64E /* AlbumsViewController.swift in Sources */,
+				C27CC34A1EA5A48C00564064 /* CameraViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,8 +292,10 @@
 				DEVELOPMENT_TEAM = 299MFJ63GP;
 				INFOPLIST_FILE = GraphicsDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.teg.GraphicsDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.teg.demo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "7c09d564-4e84-4516-91e9-cc9f0fb30710";
+				PROVISIONING_PROFILE_SPECIFIER = "teg-common-dev";
 				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
@@ -298,11 +304,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				DEVELOPMENT_TEAM = 299MFJ63GP;
 				INFOPLIST_FILE = GraphicsDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.teg.GraphicsDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.teg.demo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "5b1596f9-3701-4b76-8d78-524a1aeb72e8";
+				PROVISIONING_PROFILE_SPECIFIER = demo;
 				SWIFT_VERSION = 3.0;
 			};
 			name = Release;

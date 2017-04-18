@@ -4,6 +4,7 @@
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
+        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12086"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -81,6 +82,10 @@
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="FCU-10-irA">
                                 <rect key="frame" x="0.0" y="20" width="375" height="598"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="8rJ-Kc-sve" id="aTx-7v-fwU"/>
+                                    <outlet property="delegate" destination="8rJ-Kc-sve" id="ted-T7-LX7"/>
+                                </connections>
                             </tableView>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -99,6 +104,56 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="4Nw-L8-lE0" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="749.60000000000002" y="359.37031484257875"/>
+        </scene>
+        <!--Camera View Controller-->
+        <scene sceneID="dA8-xx-g0x">
+            <objects>
+                <viewController storyboardIdentifier="CameraViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="zNe-XW-Q2m" customClass="CameraViewController" customModule="GraphicsDemo" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="s1T-0o-k0c"/>
+                        <viewControllerLayoutGuide type="bottom" id="4gO-Zi-2sk"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="GDI-wz-3WQ">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="X4H-Sw-oJR" customClass="CameraPerview" customModule="GraphicsDemo" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="20" width="375" height="647"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="4wv-UQ-d0q">
+                                        <rect key="frame" x="301" y="597" width="54" height="30"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="54" id="Pmp-4K-Jrr"/>
+                                            <constraint firstAttribute="height" constant="30" id="xg5-DA-eCq"/>
+                                        </constraints>
+                                        <state key="normal" title="Camera"/>
+                                        <connections>
+                                            <action selector="changeCamera:" destination="zNe-XW-Q2m" eventType="touchUpInside" id="JZI-03-Weu"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="trailing" secondItem="4wv-UQ-d0q" secondAttribute="trailing" constant="20" id="EuH-yu-M3N"/>
+                                    <constraint firstAttribute="bottom" secondItem="4wv-UQ-d0q" secondAttribute="bottom" constant="20" id="zpj-O2-Z2o"/>
+                                </constraints>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="X4H-Sw-oJR" secondAttribute="trailing" id="0ck-3L-Qpj"/>
+                            <constraint firstItem="4gO-Zi-2sk" firstAttribute="top" secondItem="X4H-Sw-oJR" secondAttribute="bottom" id="DWJ-cE-NQD"/>
+                            <constraint firstItem="X4H-Sw-oJR" firstAttribute="leading" secondItem="GDI-wz-3WQ" secondAttribute="leading" id="not-TP-nYe"/>
+                            <constraint firstItem="X4H-Sw-oJR" firstAttribute="top" secondItem="s1T-0o-k0c" secondAttribute="bottom" id="qph-WP-59K"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="cameraPreview" destination="X4H-Sw-oJR" id="7Jp-vR-ieR"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="q3B-o3-p0P" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1525.5999999999999" y="362.96851574212894"/>
         </scene>
         <!--Main Tab View Controller-->
         <scene sceneID="yl2-sM-qoP">
