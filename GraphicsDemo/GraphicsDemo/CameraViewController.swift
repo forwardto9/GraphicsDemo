@@ -8,6 +8,7 @@
 
 import UIKit
 import AVFoundation
+import Photos
 
 
 extension UIDeviceOrientation {
@@ -34,12 +35,20 @@ extension UIInterfaceOrientation {
     }
 }
 
+private enum LivePhotoMode {
+    case on
+    case off
+}
 
-class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
 
+class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate, AVCaptureFileOutputRecordingDelegate {
+    
     @IBOutlet private weak var cameraPreview:CameraPerview!
     
-    fileprivate var cameraOutput = AVCaptureMetadataOutput()
+    fileprivate var metadataOutput = AVCaptureMetadataOutput()
+    fileprivate var photoOutput = AVCapturePhotoOutput()
+    fileprivate var movieFileOutput:AVCaptureMovieFileOutput?
+    
     fileprivate var videoDeviceDiscoverySession:AVCaptureDeviceDiscoverySession!
     fileprivate var cameraSession:AVCaptureSession = AVCaptureSession()
     fileprivate var cameraInput:AVCaptureDeviceInput!
@@ -54,6 +63,12 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
     }
     
     private var setupResult: SessionSetupResult = .success
+    private var livePhotoMode: LivePhotoMode = .off
+    private var inProgressLivePhotoCapturesCount = 0
+    
+    private var inProgressPhotoCaptureDelegates = [Int64 : PhotoCaptureDelegate]()
+    
+    private var backgroundRecordingID: UIBackgroundTaskIdentifier? = nil
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -109,7 +124,7 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
         }
         // Do any additional setup after loading the view.
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -163,17 +178,17 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
         super.viewWillDisappear(animated)
     }
     
-
+    
     /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
+     // MARK: - Navigation
+     
+     // In a storyboard-based application, you will often want to do a little preparation before navigation
+     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+     // Get the new view controller using segue.destinationViewController.
+     // Pass the selected object to the new view controller.
+     }
+     */
+    
     private func configureSession() {
         if setupResult != .success {
             return
@@ -265,34 +280,43 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
         }
         
         // Add output.
-        if cameraSession.canAddOutput(cameraOutput) {
-            cameraSession.addOutput(cameraOutput)
-            cameraOutput.metadataObjectTypes = [AVMetadataObjectTypeQRCode]
-            cameraOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            
-            let windowSize = UIScreen.main.bounds.size
-            let scanSize = CGSize(width:windowSize.width*3/4, height:windowSize.width*3/4)
-            var scanRect = CGRect(x:(windowSize.width-scanSize.width)/2,
-                                  y:(windowSize.height-scanSize.height)/2,
-                                  width:scanSize.width, height:scanSize.height)
-            //计算rectOfInterest 注意x,y交换位置
-            scanRect = CGRect(x:scanRect.origin.y/windowSize.height,
-                              y:scanRect.origin.x/windowSize.width,
-                              width:scanRect.size.height/windowSize.height,
-                              height:scanRect.size.width/windowSize.width);
-            //设置可探测区域
-            cameraOutput.rectOfInterest = scanRect
-            
-            DispatchQueue.main.async {
-                let scanView = UIView()
-                self.view.addSubview(scanView)
-                scanView.frame = CGRect(x: 0, y: 0, width: scanSize.width, height: scanSize.height)
-                scanView.center = CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
-                scanView.layer.borderWidth = 1
-                scanView.layer.borderColor = UIColor.green.cgColor
-                self.view.bringSubview(toFront: scanView)
+        #if false
+            if cameraSession.canAddOutput(metadataOutput) {
+                cameraSession.addOutput(metadataOutput)
+                metadataOutput.metadataObjectTypes = [AVMetadataObjectTypeQRCode]
+                metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+                
+                let windowSize = UIScreen.main.bounds.size
+                let scanSize = CGSize(width:windowSize.width*3/4, height:windowSize.width*3/4)
+                var scanRect = CGRect(x:(windowSize.width-scanSize.width)/2,
+                                      y:(windowSize.height-scanSize.height)/2,
+                                      width:scanSize.width, height:scanSize.height)
+                //计算rectOfInterest 注意x,y交换位置
+                scanRect = CGRect(x:scanRect.origin.y/windowSize.height,
+                                  y:scanRect.origin.x/windowSize.width,
+                                  width:scanRect.size.height/windowSize.height,
+                                  height:scanRect.size.width/windowSize.width);
+                //设置可探测区域
+                metadataOutput.rectOfInterest = scanRect
+                
+                DispatchQueue.main.async {
+                    let scanView = UIView()
+                    self.view.addSubview(scanView)
+                    scanView.frame = CGRect(x: 0, y: 0, width: scanSize.width, height: scanSize.height)
+                    scanView.center = CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
+                    scanView.layer.borderWidth = 1
+                    scanView.layer.borderColor = UIColor.green.cgColor
+                    self.view.bringSubview(toFront: scanView)
+                }
+                
             }
+        #endif
+        if cameraSession.canAddOutput(photoOutput) {
+            cameraSession.addOutput(photoOutput)
             
+            photoOutput.isHighResolutionCaptureEnabled = true
+            photoOutput.isLivePhotoCaptureEnabled      = photoOutput.isLivePhotoCaptureSupported
+            self.livePhotoMode = photoOutput.isLivePhotoCaptureSupported ? .on : .off
         }
         else {
             print("Could not add photo output to the session")
@@ -307,7 +331,7 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
     private var sessionRunningObserveContext = 0
     private func addObservers() {
         cameraSession.addObserver(self, forKeyPath: "running", options: .new, context: &sessionRunningObserveContext)
-
+        
         NotificationCenter.default.addObserver(self, selector: #selector(sessionRuntimeError), name: Notification.Name("AVCaptureSessionRuntimeErrorNotification"), object: cameraSession)
         
         /*
@@ -395,8 +419,8 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
             }
             
             if showResumeButton {
-                    // Simply fade-in a button to enable the user to try to resume the session running.
-                    UIView.animate(withDuration: 0.25) { [unowned self] in
+                // Simply fade-in a button to enable the user to try to resume the session running.
+                UIView.animate(withDuration: 0.25) { [unowned self] in
                 }
             }
         }
@@ -479,5 +503,212 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
         }
         
     }
+    @IBAction func takePicture(_ sender: Any) {
+        /*
+         Retrieve the video preview layer's video orientation on the main queue before
+         entering the session queue. We do this to ensure UI elements are accessed on
+         the main thread and session configuration is done on the session queue.
+         */
+        let videoPreviewLayerOrientation = cameraPreview.videoPreviewLayer.connection.videoOrientation
+        
+        captureQueue.async {
+            // Update the photo output's connection to match the video orientation of the video preview layer.
+            if let photoOutputConnection = self.photoOutput.connection(withMediaType: AVMediaTypeVideo) {
+                photoOutputConnection.videoOrientation = videoPreviewLayerOrientation
+            }
+            
+            // Capture a JPEG photo with flash set to auto and high resolution photo enabled.
+            let photoSettings = AVCapturePhotoSettings()
+            photoSettings.flashMode = .auto
+            photoSettings.isHighResolutionPhotoEnabled = true
+            if photoSettings.availablePreviewPhotoPixelFormatTypes.count > 0 {
+                photoSettings.previewPhotoFormat = [kCVPixelBufferPixelFormatTypeKey as String : photoSettings.availablePreviewPhotoPixelFormatTypes.first!]
+            }
+            
+            if self.livePhotoMode == .on && self.photoOutput.isLivePhotoCaptureSupported { // Live Photo capture is not supported in movie mode.
+                let livePhotoMovieFileName = NSUUID().uuidString
+                let livePhotoMovieFilePath = (NSTemporaryDirectory() as NSString).appendingPathComponent((livePhotoMovieFileName as NSString).appendingPathExtension("mov")!)
+                photoSettings.livePhotoMovieFileURL = URL(fileURLWithPath: livePhotoMovieFilePath)
+            }
+            
+            // Use a separate object for the photo capture delegate to isolate each capture life cycle.
+            let photoCaptureDelegate = PhotoCaptureDelegate(with: photoSettings, willCapturePhotoAnimation: {
+                DispatchQueue.main.async { [unowned self] in
+                    self.cameraPreview.videoPreviewLayer.opacity = 0
+                    UIView.animate(withDuration: 0.25) { [unowned self] in
+                        self.cameraPreview.videoPreviewLayer.opacity = 1
+                    }
+                }
+            }, capturingLivePhoto: { capturing in
+                /*
+                 Because Live Photo captures can overlap, we need to keep track of the
+                 number of in progress Live Photo captures to ensure that the
+                 Live Photo label stays visible during these captures.
+                 */
+                self.captureQueue.async { [unowned self] in
+                    if capturing {
+                        self.inProgressLivePhotoCapturesCount += 1
+                    }
+                    else {
+                        self.inProgressLivePhotoCapturesCount -= 1
+                    }
+                    
+                    let inProgressLivePhotoCapturesCount = self.inProgressLivePhotoCapturesCount
+                    DispatchQueue.main.async { [unowned self] in
+                        if inProgressLivePhotoCapturesCount > 0 {
+                            //
+                        }
+                        else if inProgressLivePhotoCapturesCount == 0 {
+                            //
+                        }
+                        else {
+                            print("Error: In progress live photo capture count is less than 0");
+                        }
+                    }
+                }
+            }, completed: { [unowned self] photoCaptureDelegate in
+                // When the capture is complete, remove a reference to the photo capture delegate so it can be deallocated.
+                self.captureQueue.async { [unowned self] in
+                    self.inProgressPhotoCaptureDelegates[photoCaptureDelegate.requestedPhotoSettings.uniqueID] = nil
+                }
+                }
+            )
+            
+            /*
+             The Photo Output keeps a weak reference to the photo capture delegate so
+             we store it in an array to maintain a strong reference to this object
+             until the capture is completed.
+             */
+            self.inProgressPhotoCaptureDelegates[photoCaptureDelegate.requestedPhotoSettings.uniqueID] = photoCaptureDelegate
+            self.photoOutput.capturePhoto(with: photoSettings, delegate: photoCaptureDelegate)
+        }
+    }
     
+    
+    func recordMoive() -> Void {
+        self.movieFileOutput = AVCaptureMovieFileOutput()
+        guard let movieFileOutput = self.movieFileOutput else {
+            return
+        }
+        
+        /*
+         Disable the Camera button until recording finishes, and disable
+         the Record button until recording starts or finishes.
+         
+         See the AVCaptureFileOutputRecordingDelegate methods.
+         
+         Retrieve the video preview layer's video orientation on the main queue
+         before entering the session queue. We do this to ensure UI elements are
+         accessed on the main thread and session configuration is done on the session queue.
+         */
+        let videoPreviewLayerOrientation = cameraPreview.videoPreviewLayer.connection.videoOrientation
+        
+        captureQueue.async { [unowned self] in
+            if !movieFileOutput.isRecording {
+                if UIDevice.current.isMultitaskingSupported {
+                    /*
+                     Setup background task.
+                     This is needed because the `capture(_:, didFinishRecordingToOutputFileAt:, fromConnections:, error:)`
+                     callback is not received until AVCam returns to the foreground unless you request background execution time.
+                     This also ensures that there will be time to write the file to the photo library when AVCam is backgrounded.
+                     To conclude this background execution, endBackgroundTask(_:) is called in
+                     `capture(_:, didFinishRecordingToOutputFileAt:, fromConnections:, error:)` after the recorded file has been saved.
+                     */
+                    self.backgroundRecordingID = UIApplication.shared.beginBackgroundTask(expirationHandler: nil)
+                }
+                
+                // Update the orientation on the movie file output video connection before starting recording.
+                let movieFileOutputConnection = self.movieFileOutput?.connection(withMediaType: AVMediaTypeVideo)
+                movieFileOutputConnection?.videoOrientation = videoPreviewLayerOrientation
+                
+                // Start recording to a temporary file.
+                let outputFileName = NSUUID().uuidString
+                let outputFilePath = (NSTemporaryDirectory() as NSString).appendingPathComponent((outputFileName as NSString).appendingPathExtension("mov")!)
+                movieFileOutput.startRecording(toOutputFileURL: URL(fileURLWithPath: outputFilePath), recordingDelegate: self)
+            }
+            else {
+                movieFileOutput.stopRecording()
+            }
+        }
+    }
+    
+    
+    func capture(_ captureOutput: AVCaptureFileOutput!, didStartRecordingToOutputFileAt fileURL: URL!, fromConnections connections: [Any]!) {
+        // Enable the Record button to let the user stop the recording.
+        DispatchQueue.main.async { [unowned self] in
+            //
+        }
+    }
+    
+    func capture(_ captureOutput: AVCaptureFileOutput!, didFinishRecordingToOutputFileAt outputFileURL: URL!, fromConnections connections: [Any]!, error: Error!) {
+        /*
+         Note that currentBackgroundRecordingID is used to end the background task
+         associated with this recording. This allows a new recording to be started,
+         associated with a new UIBackgroundTaskIdentifier, once the movie file output's
+         `isRecording` property is back to false — which happens sometime after this method
+         returns.
+         
+         Note: Since we use a unique file path for each recording, a new recording will
+         not overwrite a recording currently being saved.
+         */
+        func cleanup() {
+            let path = outputFileURL.path
+            if FileManager.default.fileExists(atPath: path) {
+                do {
+                    try FileManager.default.removeItem(atPath: path)
+                }
+                catch {
+                    print("Could not remove file at url: \(outputFileURL)")
+                }
+            }
+            
+            if let currentBackgroundRecordingID = backgroundRecordingID {
+                backgroundRecordingID = UIBackgroundTaskInvalid
+                
+                if currentBackgroundRecordingID != UIBackgroundTaskInvalid {
+                    UIApplication.shared.endBackgroundTask(currentBackgroundRecordingID)
+                }
+            }
+        }
+        
+        var success = true
+        
+        if error != nil {
+            print("Movie file finishing error: \(error)")
+            success = (((error as NSError).userInfo[AVErrorRecordingSuccessfullyFinishedKey] as AnyObject).boolValue)!
+        }
+        
+        if success {
+            // Check authorization status.
+            PHPhotoLibrary.requestAuthorization { status in
+                if status == .authorized {
+                    // Save the movie file to the photo library and cleanup.
+                    PHPhotoLibrary.shared().performChanges({
+                        let options = PHAssetResourceCreationOptions()
+                        options.shouldMoveFile = true
+                        let creationRequest = PHAssetCreationRequest.forAsset()
+                        creationRequest.addResource(with: .video, fileURL: outputFileURL, options: options)
+                    }, completionHandler: { success, error in
+                        if !success {
+                            print("Could not save movie to photo library: \(String(describing: error?.localizedDescription))")
+                        }
+                        cleanup()
+                    }
+                    )
+                }
+                else {
+                    cleanup()
+                }
+            }
+        }
+        else {
+            cleanup()
+        }
+        
+        // Enable the Camera and Record buttons to let the user switch camera and start another recording.
+        DispatchQueue.main.async { [unowned self] in
+            // Only enable the ability to change camera if the device has more than one camera.
+        }
+    }
+
 }
