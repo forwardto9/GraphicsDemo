@@ -123,6 +123,7 @@
 				TargetAttributes = {
 					C26FA21C1E9E4C8600EFB64E = {
 						CreatedOnToolsVersion = 8.3;
+						DevelopmentTeam = 299MFJ63GP;
 						ProvisioningStyle = Manual;
 					};
 				};
@@ -293,13 +294,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 299MFJ63GP;
 				INFOPLIST_FILE = GraphicsDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.teg.demo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE = "bb0209c8-99c4-4ea7-9325-8783df0afa28";
+				PROVISIONING_PROFILE_SPECIFIER = "teg-common-dev";
 				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;

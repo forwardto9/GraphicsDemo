@@ -41,19 +41,30 @@ private enum LivePhotoMode {
 }
 
 
-class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate, AVCaptureFileOutputRecordingDelegate {
+class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate, AVCaptureFileOutputRecordingDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
     
     @IBOutlet private weak var cameraPreview:CameraPerview!
     
     fileprivate var metadataOutput = AVCaptureMetadataOutput()
     fileprivate var photoOutput = AVCapturePhotoOutput()
     fileprivate var movieFileOutput:AVCaptureMovieFileOutput?
+    fileprivate var videoDataOutput:AVCaptureVideoDataOutput?
+    
+    fileprivate var cameraInput:AVCaptureDeviceInput!
+    
+    fileprivate var assetWriter:AVAssetWriter!
+    fileprivate var videoWriterInput:AVAssetWriterInput?
+    
+    fileprivate var currentDevice:AVCaptureDevice?
     
     fileprivate var videoDeviceDiscoverySession:AVCaptureDeviceDiscoverySession!
     fileprivate var cameraSession:AVCaptureSession = AVCaptureSession()
-    fileprivate var cameraInput:AVCaptureDeviceInput!
-    fileprivate var currentDevice:AVCaptureDevice?
+    
+    
     fileprivate var captureQueue:DispatchQueue = DispatchQueue(label: "session queue", attributes: [], target: nil)
+    fileprivate var audioCaptureQueue:DispatchQueue = DispatchQueue(label: "audio session queue", attributes: [], target: nil)
+    
+    
     private var isSessionRunning = false
     
     private enum SessionSetupResult {
@@ -632,7 +643,7 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
         }
     }
     
-    
+    // MARK:AVCaptureFileOutputRecordingDelegate
     func capture(_ captureOutput: AVCaptureFileOutput!, didStartRecordingToOutputFileAt fileURL: URL!, fromConnections connections: [Any]!) {
         // Enable the Record button to let the user stop the recording.
         DispatchQueue.main.async { [unowned self] in
@@ -711,4 +722,102 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
         }
     }
 
+    
+    let videoSetting: [String : Any] = [
+        AVVideoCodecKey: AVVideoCodecH264,
+        AVVideoWidthKey: 320,
+        AVVideoHeightKey: 240,
+        AVVideoCompressionPropertiesKey: [
+            AVVideoPixelAspectRatioKey: [
+                AVVideoPixelAspectRatioHorizontalSpacingKey: 1,
+                AVVideoPixelAspectRatioVerticalSpacingKey: 1
+            ],
+            AVVideoMaxKeyFrameIntervalKey: 1,
+            AVVideoAverageBitRateKey: 1280000
+        ]
+    ]
+    
+    let audioSetting: [String: Any] = [
+        AVFormatIDKey: NSNumber(value: kAudioFormatMPEG4AAC),
+        AVNumberOfChannelsKey: 1,
+        AVSampleRateKey: 22050
+    ]
+    
+    
+    func processVideo() -> Void {
+        videoDataOutput = AVCaptureVideoDataOutput()
+        videoDataOutput?.setSampleBufferDelegate(self, queue: self.captureQueue)
+        videoDataOutput?.videoSettings = [kCVPixelBufferPixelFormatTypeKey as AnyHashable:videoDataOutput!.availableVideoCVPixelFormatTypes.first!, AVVideoCodecKey:videoDataOutput!.availableVideoCodecTypes.first!]
+        videoDataOutput?.alwaysDiscardsLateVideoFrames = false // 保证不漏帧
+        
+        cameraSession.beginConfiguration()
+        
+        if cameraSession.canAddOutput(videoDataOutput!) {
+            cameraSession.addOutput(videoDataOutput!)
+        }
+        
+        cameraSession.commitConfiguration()
+        
+    }
+    
+    //MARK:AVCaptureVideoDataOutputSampleBufferDelegate
+    func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
+        // new frame
+        objc_sync_enter(self)
+        if let assetWriter = assetWriter {
+            if assetWriter.status != .writing && assetWriter.status != .unknown {
+                return
+            }
+        }
+        
+        if let assetWriter = assetWriter, assetWriter.status == .unknown {
+            assetWriter.startWriting()
+            assetWriter.startSession(atSourceTime: CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+        }
+        
+        captureQueue.async { 
+            if let videoWriterInput = self.videoWriterInput, self.videoWriterInput!.isReadyForMoreMediaData {
+                videoWriterInput.append(sampleBuffer)
+            }
+        }
+    }
+    
+    func captureOutput(_ captureOutput: AVCaptureOutput!, didDrop sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
+        // discard
+    }
+    
+    fileprivate var tmpFileURL:URL
+    func startVideoRecording() {
+        tmpFileURL = NSURL.fileURL(withPath: "\(NSTemporaryDirectory())tmp\(arc4random()).mp4")
+        do {
+            assetWriter = try AVAssetWriter(outputURL: tmpFileURL, fileType: AVFileTypeMPEG4)
+            videoWriterInput = AVAssetWriterInput(mediaType: AVMediaTypeVideo, outputSettings: videoSetting)
+            videoWriterInput?.expectsMediaDataInRealTime = true
+            videoWriterInput?.transform = CGAffineTransform(rotationAngle: CGFloat(Double.pi / 2))
+            if assetWriter!.canAdd(videoWriterInput!) {
+                assetWriter!.add(videoWriterInput!)
+            }
+//            audioWriterInput = AVAssetWriterInput(mediaType: AVMediaTypeAudio, outputSettings: audioSetting)
+//            audioWriterInput?.expectsMediaDataInRealTime = true
+//            if assetWriter!.canAddInput(audioWriterInput!) {
+//                assetWriter!.addInput(audioWriterInput!)
+//            }
+        }
+        catch _ {
+            
+        }
+    }
+    
+    func endRecording() {
+        if let assetWriter = assetWriter {
+            if let videoWriterInput = videoWriterInput {
+                videoWriterInput.markAsFinished()
+            }
+//            if let audioWriterInput = audioWriterInput {
+//                audioWriterInput.markAsFinished()
+//            }
+            assetWriter.finishWriting(completionHandler: { () -> Void in
+            })
+        }
+    }
 }
