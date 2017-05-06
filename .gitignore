@@ -1,8 +1,9 @@
 #Xcode
 
+.DS_Store
+
 *.xcworkspace
 project.xcworkspace/
 xcuserstate/
 *.xcuserstate
-
-
+../../../../../uwei.xcuserdatad/
