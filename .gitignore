@@ -1,7 +1,8 @@
+#Xcode
+
+*.xcworkspace
 project.xcworkspace/
-
+xcuserstate/
 *.xcuserstate
 
-*.xcuserstate
 
-GraphicsDemo/GraphicsDemo.xcodeproj/project.xcworkspace/xcuserdata/uwei.xcuserdatad/UserInterfaceState.xcuserstate
