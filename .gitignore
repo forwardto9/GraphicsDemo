@@ -1,9 +1,10 @@
 #Xcode
 
-.DS_Store
-
+*.xcbktlist
+*.xcscheme
 *.xcworkspace
 project.xcworkspace/
 xcuserstate/
 *.xcuserstate
-../../../../../uwei.xcuserdatad/
+GraphicsDemo/GraphicsDemo.xcodeproj/project.xcworkspace/xcuserdata/uwei.xcuserdatad/UserInterfaceState.xcuserstate
+*.xcuserstate
