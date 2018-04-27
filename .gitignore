@@ -1,9 +1,17 @@
+#Xcode
+
+*.xcbktlist
+*.xcscheme
+*.xcworkspace
 project.xcworkspace/
-
+xcuserstate/
 *.xcuserstate
-
-*.xcuserstate
+<<<<<<< HEAD
 
 GraphicsDemo/GraphicsDemo.xcodeproj/project.xcworkspace/xcuserdata/uwei.xcuserdatad/UserInterfaceState.xcuserstate
 
 *.xcuserstate
+=======
+GraphicsDemo/GraphicsDemo.xcodeproj/project.xcworkspace/xcuserdata/uwei.xcuserdatad/UserInterfaceState.xcuserstate
+*.xcuserstate
+>>>>>>> 09fb0bf1debaa15a488fc0216c6a88e4389c6e46

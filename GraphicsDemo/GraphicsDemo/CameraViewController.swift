@@ -786,7 +786,7 @@ class CameraViewController: UIViewController, AVCaptureMetadataOutputObjectsDele
         // discard
     }
     
-    fileprivate var tmpFileURL:URL
+    fileprivate var tmpFileURL:URL!
     func startVideoRecording() {
         tmpFileURL = NSURL.fileURL(withPath: "\(NSTemporaryDirectory())tmp\(arc4random()).mp4")
         do {
